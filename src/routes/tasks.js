@@ -18,8 +18,10 @@ tasksRouter.get(
     }
 );
 
-tasksRouter.get('/:id', async (req, res, next) => {
-  // TODO(PART 4): Add the required authentication and authorization middleware.
+tasksRouter.get('/:id',
+    part3NotImplemented,
+    // TODO(PART 4): Add the required authentication and authorization middleware.
+    async (req, res, next) => {
   // TODO(PART 4): Query req.params.id with parameterized SQL using db.query(sql, parameters).
   // TODO(PART 4): Return 404 when no task exists, allow instructors, and check student ownership.
   // TODO(PART 4): Return 403 for another student's task; return the task on success.
