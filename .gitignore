@@ -141,3 +141,9 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Local instructor prompt
+final_prompt.md
+
+# Local SQLite development data
+data/*.db
