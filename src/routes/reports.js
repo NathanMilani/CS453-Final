@@ -13,7 +13,7 @@ reportsRouter.post('/', authenticateToken, async (req, res, next) => {
     // TODO(PART 5): Return 202 with jobId, status, and statusUrl.
     // TODO(PART 5): Do not call generateReport() from this request handler.
     const jobId = randomUUID();
-    const studentId = req.user?.sub;
+    const studentId = req.user.sub;
     return res.status(501).json({ error: 'Report submission is not implemented yet.' });
   } catch (error) {
     return next(error);
