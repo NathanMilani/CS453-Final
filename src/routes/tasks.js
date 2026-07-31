@@ -3,18 +3,20 @@ import { db } from '../database.js';
 
 export const tasksRouter = Router();
 
-tasksRouter.get('/', async (req, res, next) => {
-  // TODO(PART 3): Add authentication and the student/instructor authorization middleware.
-  try {
-    const result = await db.query(
-      `SELECT id, title, course, student_id AS studentId, completed
-       FROM tasks ORDER BY id`
-    );
-    res.json(result.rows);
-  } catch (error) {
-    next(error);
-  }
-});
+function part3NotImplemented(req, res, next) {
+  return res.status(501).json({
+    error: "Part 3 middleware has not been implemented."
+  });
+}
+
+tasksRouter.get(
+    "/",
+    part3NotImplemented,
+    /* TODO(PART 3): Add required middleware here. */
+    (req, res) => {
+      res.json({ userId: req.user.sub, tasks: [] });
+    }
+);
 
 tasksRouter.get('/:id', async (req, res, next) => {
   // TODO(PART 4): Add the required authentication and authorization middleware.
@@ -25,8 +27,10 @@ tasksRouter.get('/:id', async (req, res, next) => {
   return res.status(501).json({ error: 'Task-by-ID is not implemented yet.' });
 });
 
-tasksRouter.delete('/:id', async (req, res, next) => {
-  // TODO(PART 3): Add authentication and instructor-only authorization middleware.
+tasksRouter.delete('/:id',
+    part3NotImplemented,
+    // TODO(PART 3): Add authentication and instructor-only authorization middleware.
+    async (req, res, next) => {
   try {
     const result = await db.run('DELETE FROM tasks WHERE id = ?', [req.params.id]);
     if (result.changes === 0) return res.status(404).json({ error: 'Not Found' });
