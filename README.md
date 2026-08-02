@@ -24,6 +24,39 @@ Authorization: Bearer <token>
 
 For example, a request can be sent with `curl -H "Authorization: Bearer <token>" http://localhost:3000/tasks`. The authentication and authorization behavior is part of the exam and is intentionally unfinished.
 
+# Additional Instructions for Testing
+
+Before I was able to test the Student (djs001), Student (student002), or Instructor, I assigned them tokens which were long strings of numbers like 177 characters worth of information. This is how I did that in powershell:
+- CD the the cs453-final-project folder
+- after starting the server using npm start, go over to another powershell terminal and do a npm run tokens. This will give you a string of characters for each Student and Intructor.
+- Use a $studentToken = "the token associated with that respective student" and do that same thing but do instructorToken = "the token associated with the instructor"
+- After that, you are able to test the parts 3-5. This is what I did:
+  - Invoke-RestMethod `
+    >>   -Uri "http://localhost:3000/tasks/task-001" `
+    >>   -Method Get `
+    >>   -Headers @{ Authorization = "Bearer $studentToken"
+  - Invoke-RestMethod `
+    >>   -Uri "http://localhost:3000/tasks/task-003" `
+    >>   -Method Get `
+    >>   -Headers @{ Authorization = "Bearer $studentToken" }
+  - Invoke-RestMethod `
+    >>   -Uri "http://localhost:3000/tasks/task-003" `
+    >>   -Method Get `
+    >>   -Headers @{ Authorization = "Bearer $instructorToken" }
+  - Invoke-RestMethod `
+    >>   -Uri "http://localhost:3000/tasks/task-003" `
+    >>   -Method Delete `
+    >>   -Headers @{ Authorization = "Bearer $instructorToken" }
+  - Invoke-RestMethod `
+    >>   -Uri "http://localhost:3000/reports" `
+    >>   -Method Post `
+    >>   -Headers @{ Authorization = "Bearer $studentToken" }
+  - $jobId = "b7b0497a-c819-496e-a7f5-a5e494ae25f3"
+  - Invoke-RestMethod `
+    >>   -Uri "http://localhost:3000/reports/$jobId" `
+    >>   -Method Get `
+    >>   -Headers @{ Authorization = "Bearer $studentToken" }
+After this testing, the software ran as intended and was safe for submission.
 ## File map
 
 | Exam part | Files |
