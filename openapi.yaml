@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: Course Task Tracker API
+  version: 1.0.0
+  description: API for managing course tasks and generating student progress reports.
+servers:
+  - url: https://api.coursetasktracker.com/v1
+    description: Production HTTPS Server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /tasks:
+    get:
+      summary: Get all tasks
+      description: Retrieve a list of tasks. Accessible by students and instructors.
+      operationId: getTasks
+      responses:
+        '200':
+          description: A list of tasks.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    example: "djs001"
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+    post:
+      summary: Create a new task
+      description: Create a task for a student.
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - course
+                - studentId
+              properties:
+                title:
+                  type: string
+                  example: "Complete Part 5"
+                course:
+                  type: string
+                  example: "CS453"
+                studentId:
+                  type: string
+                  example: "djs001"
+                completed:
+                  type: boolean
+                  default: false
+      responses:
+        '201':
+          description: Task successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /tasks/{id}:
+    get:
+      summary: Get a task by ID
+      description: Retrieve a specific task. Instructors can access any task; students can only access their own.
+      operationId: getTaskById
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+    put:
+      summary: Replace an existing task
+      description: Completely update/replace a task by ID.
+      operationId: updateTask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - course
+                - studentId
+                - completed
+              properties:
+                title:
+                  type: string
+                  example: "Complete Part 5"
+                course:
+                  type: string
+                  example: "CS453"
+                studentId:
+                  type: string
+                  example: "djs001"
+                completed:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Task replaced successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+    patch:
+      summary: Partially update a task
+      description: Update one or more fields of an existing task.
+      operationId: patchTask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                course:
+                  type: string
+                studentId:
+                  type: string
+                completed:
+                  type: boolean
+      responses:
+        '200':
+          description: Task patched successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+    delete:
+      summary: Delete a task
+      description: Delete a specific task by ID. **Instructor role only.**
+      operationId: deleteTask
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '204':
+          description: Task deleted successfully. No content returned.
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+  /reports:
+    post:
+      summary: Submit a report generation job
+      description: Queue an asynchronous background job to generate a progress report. Returns immediately with job details.
+      operationId: createReportJob
+      responses:
+        '202':
+          description: Report job accepted and queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - jobId
+                  - status
+                  - statusUrl
+                properties:
+                  jobId:
+                    type: string
+                    example: "report-17"
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                    example: "pending"
+                  statusUrl:
+                    type: string
+                    example: "/reports/report-17"
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+
+  /reports/{id}:
+    get:
+      summary: Get report job status
+      description: Check the status and retrieve the download URL for a report generation job.
+      operationId: getReportJob
+      parameters:
+        - $ref: '#/components/parameters/ReportId'
+      responses:
+        '200':
+          description: Report job status retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - studentId
+                  - status
+                properties:
+                  id:
+                    type: string
+                    example: "report-17"
+                  studentId:
+                    type: string
+                    example: "djs001"
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                    example: "completed"
+                  downloadUrl:
+                    type: string
+                    nullable: true
+                    example: "https://storage.example.com/reports/djs001.pdf"
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    TaskId:
+      name: id
+      in: path
+      required: true
+      description: Unique ID of the task
+      schema:
+        type: string
+        example: "1"
+    ReportId:
+      name: id
+      in: path
+      required: true
+      description: Unique ID of the report job
+      schema:
+        type: string
+        example: "report-17"
+
+  schemas:
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - course
+        - studentId
+        - completed
+      properties:
+        id:
+          type: string
+          example: "1"
+        title:
+          type: string
+          example: "Submit Lab Report"
+        course:
+          type: string
+          example: "CS453"
+        studentId:
+          type: string
+          example: "djs001"
+        completed:
+          type: boolean
+          example: false
+
+  responses:
+    400BadRequest:
+      description: Bad Request. Missing or invalid request payload/parameters.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid input parameters."
+    401Unauthorized:
+      description: Unauthorized. Missing, expired, malformed, or invalid Bearer JWT token.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Unauthorized: Missing or invalid token."
+    403Forbidden:
+      description: Forbidden. Authenticated user lacks permission to perform this operation.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Forbidden: Insufficient permissions."
+    404NotFound:
+      description: Not Found. The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Not Found"

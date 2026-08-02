@@ -15,9 +15,8 @@ function part3NotImplemented(req, res, next) {
 
 tasksRouter.get(
     "/",
-    // TODO(PART 3): Replace part3NotImplemented with the required
-    // authentication and role-authorization middleware.
-    part3NotImplemented,
+    authenticateToken,
+    requireRole("student", "instructor"),
     (req, res) => {
       res.json({
         userId: req.user.sub,
@@ -27,21 +26,46 @@ tasksRouter.get(
 );
 
 tasksRouter.get('/:id',
-    part3NotImplemented,
-    // TODO(PART 4): Add the required authentication and authorization middleware.
+    authenticateToken,
+    requireRole("student", "instructor"),
     async (req, res, next) => {
-  // TODO(PART 4): Query req.params.id with parameterized SQL using db.query(sql, parameters).
-  // TODO(PART 4): Return 404 when no task exists, allow instructors, and check student ownership.
-  // TODO(PART 4): Return 403 for another student's task; return the task on success.
-  // req.params.id, req.user.sub, req.user.role, db.query(), and next(error) are available here.
-  return res.status(501).json({ error: 'Task-by-ID is not implemented yet.' });
-});
+      try {
+        // Query database using parameterized SQL and alias student_id as studentId
+        const sql = `
+          SELECT id, title, course, student_id AS studentId, completed
+          FROM tasks
+          WHERE id = ?
+        `;
+        const result = await db.query(sql, [req.params.id]);
+
+        // 1. Return 404 if the task does not exist
+        if (!result.rows || result.rows.length === 0) {
+          return res.status(404).json({ error: 'Not Found' });
+        }
+
+        const task = result.rows[0];
+
+        // 2. Check authorization: instructors can view any task, but students can only view their own
+        if (req.user.role === 'student' && task.studentId !== req.user.sub) {
+          return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // 3. Convert integer 'completed' (0 or 1) to a JavaScript Boolean
+        task.completed = Boolean(task.completed);
+
+        // 4. Return 200 OK with the formatted task
+        return res.json(task);
+      } catch (error) {
+        // Pass unexpected errors to Express error-handling middleware
+        return next(error);
+      }
+    }
+);
 
 tasksRouter.delete(
     "/:id",
-    // TODO(PART 3): Replace part3NotImplemented with authentication
-    // and instructor-only authorization middleware.
-    part3NotImplemented,
+    authenticateToken,
+    requireRole("instructor"),
     async (req, res, next) => {
       try {
         const result = await db.run(
